@@ -3,14 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulador SO</title>
+    <title>Simulador de Algoritmos TSO</title>
+    <!-- Importando la fuente moderna Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <!-- Tu estructura HTML con la tabla y botones aquí -->
-    <button id="btn-simular">Simular</button>
+    <header class="topbar">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <h2>Simulador SO</h2>
+            <button id="btn-toggle" class="btn-toggle-sidebar">
+                ◀ Ocultar Panel
+            </button>
+        </div>
+        <div class="selector-algoritmo">
+            <label for="algoritmo">Algoritmo:</label>
+            <select id="algoritmo">
+                <option value="FCFS">FCFS (First-Come, First-Served)</option>
+                <option value="SJF">SJF (Shortest Job First)</option>
+                <option value="RR">Round Robin</option>
+            </select>
+        </div>
+    </header>
 
-    <!-- Importante: type="module" -->
-    <script type="module" src="/src/main.js"></script>
+    <main class="layout">
+        <aside class="panel-izquierdo">
+            <div class="control-procesos">
+                <label for="num-procesos">Número de procesos:</label>
+                <input type="number" id="num-procesos" value="3" min="1" max="10">
+            </div>
+
+            <div class="tabla-container">
+                <table id="tabla-entradas">
+                    <thead>
+                        <tr>
+                            <th>Proceso</th>
+                            <th>Tiempo de Ejecución</th>
+                            <th>Tiempo de Llegada</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Generado con JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="controles-extra">
+                <label for="ctxt">Cambio de contexto (ctxt):</label>
+                <input type="number" id="ctxt" value="0" min="0">
+            </div>
+            <div class="controles-extra" id="contenedor-quantum" style="display: none;">
+                <label for="quantum" style="color: var(--accent-gold);">Quantum (Q):</label>
+                <input type="number" id="quantum" value="2" min="1">
+            </div>
+            <div class="controles-extra" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <label for="modo-debug" style="color: var(--primary); cursor: pointer;">🐞 Activar Modo Paso a Paso</label>
+                <input type="checkbox" id="modo-debug" style="width: auto; transform: scale(1.2); cursor: pointer;">
+            </div>
+
+            <button id="btn-simular" class="btn-accion">Simular Algoritmo</button>
+        </aside>
+
+        <section class="panel-derecho">
+            <div class="tarjeta-resultado">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0;">Diagrama de Gantt</h3>
+                <div id="controles-debug" style="display: none; gap: 10px;">
+                    <button id="btn-retroceder-paso" class="btn-accion" style="width: auto; margin: 0; padding: 8px 15px; background: #64748B; color: white;">⬅️ Retroceder</button>
+                    <button id="btn-siguiente-paso" class="btn-accion" style="width: auto; margin: 0; padding: 8px 15px; background: var(--accent-gold); color: #000;">Siguiente Paso ➡️</button>
+                </div>
+            </div>
+                
+                <!-- Consola de explicación del Debug -->
+                <div id="consola-debug" style="display: none; background: #1E293B; color: #10B981; padding: 10px 15px; border-radius: 6px; font-family: monospace; font-size: 0.9rem; margin-bottom: 15px;">
+                    Esperando inicio de simulación...
+                </div>
+
+                <div id="gantt-container" class="gantt">
+                    <p class="placeholder">Ingresa los datos y presiona simular...</p>
+                </div>
+            </div>
+
+            <div class="tarjeta-resultado">
+                <h3>Estadísticas</h3>
+                <table id="tabla-estadisticas">
+                    <thead>
+                        <tr>
+                            <th>Proceso</th>
+                            <th>Tiempo de Retorno</th>
+                            <th>Tiempo de Espera</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Generado con JS -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th>Promedios</th>
+                            <th id="promedio-tret">0.00</th>
+                            <th id="promedio-tesp">0.00</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
 </body>
 </html>
