@@ -13,7 +13,7 @@
 
 body {
     margin: 0;
-    font-family: 'Poppins', sans-serif; /* Fuente moderna y redondeada */
+    font-family: 'Poppins', sans-serif;
     background-color: var(--bg-main);
     color: var(--text-main);
     min-height: 100vh;
@@ -27,7 +27,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.05); /* Sombra lila muy sutil */
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.05); 
     border-bottom: 2px solid var(--border);
     z-index: 10;
 }
@@ -39,153 +39,12 @@ body {
 
 .layout {
     display: grid;
-    grid-template-columns: 380px 1fr; /* Un poquito más ancho para que quepan los textos largos */
+    grid-template-columns: 380px 1fr; 
     gap: 25px;
     padding: 25px;
     flex-grow: 1;
     overflow: hidden;
-}
-
-/* Paneles */
-.panel-izquierdo, .panel-derecho {
-    background: var(--bg-panel);
-    border-radius: 16px; /* Bordes más redondeados y modernos */
-    padding: 25px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.03); /* Sombra súper difuminada */
-    overflow-y: auto;
-}
-
-/* Tablas */
-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; }
-th, td { padding: 12px; text-align: center; border-bottom: 1px solid var(--border); font-size: 0.9rem;}
-th { background-color: var(--accent-green); color: #065F46; font-weight: 600; }
-th:first-child { border-top-left-radius: 8px; }
-th:last-child { border-top-right-radius: 8px; }
-
-input[type="number"] { width: 65px; padding: 6px; text-align: center; border: 2px solid var(--border); border-radius: 6px; color: var(--text-main); font-family: 'Poppins', sans-serif; font-weight: 500;}
-input[type="number"]:focus { outline: none; border-color: var(--primary); }
-
-/* Controles */
-.control-procesos, .controles-extra { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 0.95rem;}
-.btn-accion { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-size: 1rem; font-weight: 600; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; margin-top: 10px; font-family: 'Poppins', sans-serif;}
-.btn-accion:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 8px 15px rgba(139, 92, 246, 0.2); }
-
-/* ---- LÍNEA DE TIEMPO (GANTT) ---- */
-.tarjeta-resultado { margin-bottom: 35px; }
-.tarjeta-resultado h3 { color: var(--text-main); font-weight: 600; margin-bottom: 25px; display: inline-block; }
-
-
-
-.gantt-timeline {
-    display: flex;
-    width: 100%;
-    position: relative;
-    padding-top: 40px; 
-    /* Aumentamos de 30px a 70px para que las líneas punteadas y letras entren completas */
-    padding-bottom: 70px; 
-    align-items: flex-end;
-}
-/* Marca de tiempo de bloque (Líneas sólidas y gruesas) */
-.timeline-start, .segment-end {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.timeline-start {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    transform: translateX(-50%);
-}
-.segment-end {
-    position: absolute;
-    right: 0;
-    top: 100%;
-    transform: translateX(50%);
-}
-
-.tick-solid {
-    height: 12px;
-    border-left: 3px solid var(--text-main); /* Línea gruesa y continua */
-    margin-bottom: 2px;
-}
-.time { font-size: 0.85rem; font-weight: 700; color: var(--text-main); }
-
-/* Segmentos de la línea principal */
-.timeline-segment {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-}
-
-.segment-label {
-    font-weight: 700;
-    font-size: 0.9rem;
-    margin-bottom: 8px;
-}
-
-.segment-bar {
-    width: 100%;
-    height: 6px; 
-    position: relative;
-    border-radius: 4px;
-}
-
-/* Marcas de Llegada de procesos (Líneas punteadas hacia abajo) */
-.arrival-marker {
-    position: absolute;
-    top: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    transform: translateX(-50%);
-    z-index: 5;
-}
-.arrival-marker .tick-dashed {
-    height: 20px; 
-    border-left: 2px dashed var(--accent-gold);
-    margin-bottom: 4px; /* Separación con el número */
-}
-.arrival-time {
-    font-size: 0.85rem; /* Mismo tamaño que los de inicio/fin */
-    font-weight: 600;
-    color: var(--text-muted); /* Color más suave/menos visible */
-    margin-bottom: 2px; /* Separación con la letra */
-}
-.arrival-label {
-    font-size: 0.9rem;
-    font-weight: 800; /* Letra destacada al final */
-    color: var(--text-main);
-}
-/* ---- PATRÓN PARA EL CAMBIO DE CONTEXTO Y VACÍO ---- */
-.block-cs {
-    /* Fondo blanco con rayones oscuros diagonales */
-    background: repeating-linear-gradient(
-        -45deg,
-        #FFFFFF,
-        #FFFFFF 4px,
-        #1E293B 4px,
-        #1E293B 6px
-    );
-    border: 1px solid var(--border);
-}
-
-.block-idle {
-    background-color: #F1F5F9;
-}
-/* ---- ANIMACIONES PARA EL MODO DEBUG ---- */
-@keyframes crecerGantt {
-    from { opacity: 0; transform: scaleX(0); transform-origin: left; }
-    to { opacity: 1; transform: scaleX(1); transform-origin: left; }
-}
-
-.animar-entrada {
-    animation: crecerGantt 0.5s ease-out forwards;
-}
-/* ---- MEJORAS DE UX: SIDEBAR OCULTABLE Y SCROLL ---- */
-.layout {
-    transition: grid-template-columns 0.3s ease; /* Animación suave al ocultar */
+    transition: grid-template-columns 0.3s ease; 
 }
 
 /* Clase que aplicaremos con JS para ocultar el panel */
@@ -202,10 +61,30 @@ input[type="number"]:focus { outline: none; border-color: var(--primary); }
     box-shadow: none;
 }
 
-.panel-izquierdo {
+/* Paneles */
+.panel-izquierdo, .panel-derecho {
+    background: var(--bg-panel);
+    border-radius: 16px; 
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03); 
+    overflow-y: auto;
     transition: all 0.3s ease;
-    overflow: hidden; /* Evita que el contenido se desborde al achicarse */
 }
+
+/* Tablas */
+table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 15px; }
+th, td { padding: 12px; text-align: center; border-bottom: 1px solid var(--border); font-size: 0.9rem;}
+th { background-color: var(--accent-green); color: #065F46; font-weight: 600; }
+th:first-child { border-top-left-radius: 8px; }
+th:last-child { border-top-right-radius: 8px; }
+
+input[type="number"], input[type="text"] { width: 65px; padding: 6px; text-align: center; border: 2px solid var(--border); border-radius: 6px; color: var(--text-main); font-family: 'Poppins', sans-serif; font-weight: 500;}
+input[type="number"]:focus, input[type="text"]:focus { outline: none; border-color: var(--primary); }
+
+/* Controles */
+.control-procesos, .controles-extra { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 500; font-size: 0.95rem;}
+.btn-accion { width: 100%; background: var(--primary); color: white; border: none; padding: 14px; font-size: 1rem; font-weight: 600; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; margin-top: 10px; font-family: 'Poppins', sans-serif;}
+.btn-accion:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 8px 15px rgba(139, 92, 246, 0.2); }
 
 /* Botón para colapsar/expandir */
 .btn-toggle-sidebar {
@@ -223,27 +102,110 @@ input[type="number"]:focus { outline: none; border-color: var(--primary); }
     align-items: center;
     gap: 8px;
 }
-.btn-toggle-sidebar:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-}
+.btn-toggle-sidebar:hover { border-color: var(--primary); color: var(--primary); }
 
-/* Asegurar que el contenedor del Gantt tenga scroll nativo */
+/* ---- LÍNEA DE TIEMPO (GANTT) ---- */
+.tarjeta-resultado { margin-bottom: 35px; }
+.tarjeta-resultado h3 { color: var(--text-main); font-weight: 600; margin-bottom: 25px; display: inline-block; }
 
-/* ---- EFECTO DE PROCESO TERMINADO (RASPADO) ---- */
-/* Asegurar que el contenedor del Gantt tenga scroll nativo */
 .gantt-container {
     width: 100%;
     overflow-x: auto; 
     padding: 10px 10px 25px 10px; 
     scrollbar-width: thin;
     scrollbar-color: var(--primary) var(--border);
-    /* ELIMINAMOS scroll-behavior: smooth; para que no pelee con el JS */
 }
 
-/* ---- EFECTO DE PROCESO TERMINADO (TACHADO EN LA LETRA) ---- */
+.gantt-timeline {
+    display: flex;
+    width: 100%;
+    position: relative;
+    padding-top: 40px; 
+    padding-bottom: 70px; 
+    align-items: flex-end;
+    margin-left: 40px; /* Espacio para poner las etiquetas Q1, Q2 en los ejes */
+}
+
+/* ---- EJES Y ETIQUETAS DE LAS COLAS (ESTILO CUADERNO) ---- */
+.queue-axis-label {
+    position: absolute;
+    left: -40px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--primary);
+}
+
+.axis-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border);
+    z-index: 0; /* Al fondo, detrás de los colores */
+}
+
+/* Marca de tiempo de bloque (Líneas sólidas y gruesas) */
+.timeline-start, .segment-end {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.timeline-start { position: absolute; left: 0; bottom: 0; transform: translateX(-50%); }
+.segment-end { position: absolute; right: 0; top: 100%; transform: translateX(50%); z-index: 15; }
+
+.tick-solid { height: 12px; border-left: 3px solid var(--text-main); margin-bottom: 2px; }
+.time { font-size: 0.85rem; font-weight: 700; color: var(--text-main); }
+
+/* Segmentos de la línea principal */
+.timeline-segment {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.segment-label { font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; z-index: 10; }
+
+.segment-bar {
+    width: 100%;
+    height: 6px; 
+    position: relative;
+    border-radius: 4px;
+    z-index: 10;
+}
+
+/* Marcas de Llegada de procesos (Cascada) */
+.arrival-marker {
+    position: absolute;
+    top: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translateX(-50%);
+    z-index: 5;
+}
+.arrival-marker .tick-dashed { height: 20px; border-left: 2px dashed var(--accent-gold); margin-bottom: 4px; }
+.arrival-time { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 2px; }
+.arrival-label { font-size: 0.9rem; font-weight: 800; color: var(--text-main); }
+
+/* ---- PATRÓN PARA EL CAMBIO DE CONTEXTO Y VACÍO ---- */
+.block-cs {
+    background: repeating-linear-gradient(-45deg, #FFFFFF, #FFFFFF 4px, #1E293B 4px, #1E293B 6px);
+    border: 1px solid var(--border);
+}
+.block-idle { background-color: #F1F5F9; }
+
+/* ---- EL RAYONEO (CUANDO EL PROCESO TERMINA) ---- */
 .text-finished {
     text-decoration: line-through 2px solid var(--text-main);
     font-style: italic;
     opacity: 0.6;
 }
+
+/* ---- ANIMACIONES PARA EL MODO DEBUG ---- */
+@keyframes crecerGantt {
+    from { opacity: 0; transform: scaleX(0); transform-origin: left; }
+    to { opacity: 1; transform: scaleX(1); transform-origin: left; }
+}
+
+.animar-entrada { animation: crecerGantt 0.5s ease-out forwards; }

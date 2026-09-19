@@ -22,6 +22,8 @@
                 <option value="FCFS">FCFS (First-Come, First-Served)</option>
                 <option value="SJF">SJF (Shortest Job First)</option>
                 <option value="RR">Round Robin</option>
+                <option value="PR">Prioridades (No apropiativo)</option>
+                <option value="MLQ">Colas Múltiples (MLFQ)</option>
             </select>
         </div>
     </header>
@@ -40,6 +42,7 @@
                             <th>Proceso</th>
                             <th>Tiempo de Ejecución</th>
                             <th>Tiempo de Llegada</th>
+                            <th class="col-prio" style="display: none;">Prioridad</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -52,10 +55,18 @@
                 <label for="ctxt">Cambio de contexto (ctxt):</label>
                 <input type="number" id="ctxt" value="0" min="0">
             </div>
+            
             <div class="controles-extra" id="contenedor-quantum" style="display: none;">
                 <label for="quantum" style="color: var(--accent-gold);">Quantum (Q):</label>
                 <input type="number" id="quantum" value="2" min="1">
             </div>
+            
+            <!-- NUEVO CONTENEDOR MLQ DINÁMICO -->
+            <div class="controles-extra" id="contenedor-mlq" style="display: none; flex-direction: column; align-items: flex-start; gap: 8px;">
+                <label for="mlq-quantums" style="color: #EF4444; font-size: 0.9rem; font-weight: 600;">Quantums (separados por coma):</label>
+                <input type="text" id="mlq-quantums" value="2, 4, 8" style="width: 100%; text-align: center; padding: 8px; border: 2px solid var(--border); border-radius: 6px; font-family: 'Poppins', sans-serif; color: var(--text-main); font-weight: 600; box-sizing: border-box;">
+            </div>
+
             <div class="controles-extra" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
                 <label for="modo-debug" style="color: var(--primary); cursor: pointer;">🐞 Activar Modo Paso a Paso</label>
                 <input type="checkbox" id="modo-debug" style="width: auto; transform: scale(1.2); cursor: pointer;">
@@ -79,7 +90,7 @@
                     Esperando inicio de simulación...
                 </div>
 
-                <div id="gantt-container" class="gantt">
+                <div id="gantt-container" class="gantt-container">
                     <p class="placeholder">Ingresa los datos y presiona simular...</p>
                 </div>
             </div>
