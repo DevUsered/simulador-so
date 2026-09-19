@@ -209,3 +209,30 @@ input[type="number"]:focus, input[type="text"]:focus { outline: none; border-col
 }
 
 .animar-entrada { animation: crecerGantt 0.5s ease-out forwards; }
+/* ---- MARCA PERSONAL Y COPYRIGHT ---- */
+.marca-personal {
+    text-align: center;
+    padding: 12px 20px;
+    background-color: var(--bg-panel);
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-family: 'Poppins', sans-serif;
+    margin-top: auto; /* Empuja el footer hacia abajo */
+    z-index: 10;
+}
+
+.marca-personal p {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.marca-personal strong {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.marca-personal .sub-marca {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
