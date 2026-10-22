@@ -188,7 +188,7 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
         totalColas = ganttData.length > 0 ? Math.max(...ganttData.map(b => b.colaExec || 1)) : 1;
     }
 
-    let htmlFinal = `<div style="display: flex; flex-direction: column; gap: 55px; padding: 40px 20px 20px 40px;">`;
+    let htmlFinal = `<div style="display: flex; flex-direction: column; padding: 40px 250px 20px 40px;">`; // Padding derecho extra para que las colitas no se corten
 
     for (let q = 1; q <= totalColas; q++) {
         let bloquesCarril = ganttData.filter(b => {
@@ -211,10 +211,26 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
             });
         }
 
+        let marcasExistentes = new Set();
+        bloquesCarril.forEach(b => {
+            marcasExistentes.add(b.inicio);
+            marcasExistentes.add(b.fin);
+        });
+
+        let maxApiladosCola = 0;
+        let conteoLlegadas = {};
+        llegadasDeEstaCola.forEach(l => {
+            conteoLlegadas[l.t] = (conteoLlegadas[l.t] || 0) + 1;
+            if (conteoLlegadas[l.t] > maxApiladosCola) {
+                maxApiladosCola = conteoLlegadas[l.t];
+            }
+        });
+        
+        let margenInferior = 40 + (maxApiladosCola * 16);
         let nombreCola = algoritmoActual === 'MLQ' ? (q > qArray.length ? 'FCFS' : `Q${q}`) : 'CPU';
         
         htmlFinal += `
-            <div style="display: flex; align-items: flex-end; position: relative; width: max-content;">
+            <div style="display: flex; align-items: flex-end; position: relative; width: max-content; margin-bottom: ${margenInferior}px;">
                 <div style="position: absolute; left: -40px; font-weight: bold; color: var(--primary); font-size: 0.95rem; bottom: 0;">${nombreCola}</div>
                 <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: #64748B; z-index: 0;"></div>
         `;
@@ -271,13 +287,18 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
                 let tiempo = parseInt(tiempoStr);
                 let porcentaje = ((tiempo - bloque.inicio) / bloque.duracion) * 100;
                 
-                let letrasHTML = letras.map(l => `<div style="font-size: 0.8rem; color: var(--text-main); font-weight: 700; line-height: 1.1;">${l}</div>`).join('');
-                
-                llegadasHTML += `
-                    <div style="position: absolute; left: ${porcentaje}%; bottom: 8px; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%); z-index: 20;">
-                        <div style="display: flex; flex-direction: column-reverse; align-items: center; margin-bottom: 2px;">${letrasHTML}</div>
-                        <div style="height: 12px; border-left: 1.5px solid #94A3B8;"></div>
-                        <div style="font-size: 0.65rem; color: #64748B; font-weight: normal; margin-top: 1px;">${tiempo}</div>
+                let letrasHTML = letras.map(l => `<div style="font-size: 0.8rem; color: var(--text-main); font-weight: normal; line-height: 1.2;">${l}</div>`).join('');
+                let numVisual = marcasExistentes.has(tiempo) 
+                    ? '' 
+                    : `<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.65rem; color: #64748B; background: #ffffff; padding: 0 2px; z-index: 2;">${tiempo}</div>`;
+
+                    llegadasHTML += `
+                    <div style="position: absolute; left: ${porcentaje}%; top: 100%; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%); z-index: 20; padding-top: 2px;">
+                        <div style="position: relative; height: 26px; width: 24px; display: flex; justify-content: center;">
+                            <div style="position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); border-left: 1.5px dashed #94A3B8; z-index: 1;"></div>
+                            ${numVisual}
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">${letrasHTML}</div>
                     </div>
                 `;
             }
@@ -298,28 +319,18 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
             `;
         }
 
-        // ✨ MAGIA VISUAL: EL HISTORIAL CRONOLÓGICO EXACTO ✨
         let bloquesDeProceso = bloquesCarril.filter(b => b.tipo === 'proceso');
 
-        // Mapeamos ABSOLUTAMENTE TODOS los bloques de la cola, sin omitir ni borrar a nadie
         let listaColita = bloquesDeProceso.map(b => {
             let esActualDebug = (!esResultadoFinal && pasoActual > 0 && pasosGantt[pasoActual - 1] === b);
-            
-            // Si en este bloque el proceso se muere/termina, le ponemos la raya tachada
-            if (b.esFinal) {
-                return `<span style="text-decoration: line-through 1.5px solid; opacity: 0.6;">${b.id}</span>`;
-            }
-            // Si está en debug y no es el actual, lo bajamos de opacidad
-            if (!esResultadoFinal && !esActualDebug) {
-                return `<span style="opacity: 0.6;">${b.id}</span>`;
-            }
-            
+            if (b.esFinal) return `<span style="text-decoration: line-through 1.5px solid; opacity: 0.6;">${b.id}</span>`;
+            if (!esResultadoFinal && !esActualDebug) return `<span style="opacity: 0.6;">${b.id}</span>`;
             return `<span>${b.id}</span>`;
         }).join(', ');
 
         if (bloquesDeProceso.length > 0) {
             htmlFinal += `
-                <div style="margin-left: 30px; margin-bottom: 2px; font-size: 0.95rem; font-weight: 800; color: var(--text-main); white-space: nowrap;">
+                <div style="position: absolute; right: -15px; bottom: 40px; transform: translateX(100%); font-size: 0.85rem; font-weight: 800; color: var(--text-main); white-space: nowrap;">
                     ${listaColita}
                 </div>
             `;
@@ -346,6 +357,7 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
         } else {
             const bloqueActual = pasosGantt[pasoActual - 1];
             let icono = bloqueActual.tipo === 'proceso' ? '🟢' : (bloqueActual.tipo === 'cs' ? '⚙️' : '💤');
+            
             let msj = `> [${bloqueActual.inicio} - ${bloqueActual.fin}] ${icono} ${bloqueActual.razon}`;
             if(consola) consola.innerHTML = msj;
         }
@@ -371,7 +383,6 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
         mostrarEstadisticas(stats, tbodyStats); 
     }
 }
-
 function mostrarEstadisticas(stats, tbodyStats) {
     let sumaTret = 0, sumaTesp = 0;
     if (tbodyStats) tbodyStats.innerHTML = '';
