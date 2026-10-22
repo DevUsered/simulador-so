@@ -2,7 +2,6 @@ import { simularFCFS, simularSJF, simularRR, simularPR, simularMLQ } from './sch
 
 const colores = ['#3B82F6', '#10B981', '#6366F1', '#F59E0B', '#EC4899', '#14B8A6', '#8B5CF6'];
 
-// ---- TÍTULOS DE LAS TABLAS COMO EN LA PIZARRA ----
 document.querySelector('#tabla-entradas thead').innerHTML = `
     <tr>
         <th>Proc</th>
@@ -22,8 +21,6 @@ document.querySelector('#tabla-estadisticas thead').innerHTML = `
 const inputNumProcesos = document.getElementById('num-procesos');
 const tbodyEntradas = document.querySelector('#tabla-entradas tbody');
 const btnSimular = document.getElementById('btn-simular');
-
-// ---- LÓGICA PARA MOSTRAR/OCULTAR CONTROLES ----
 const selectAlgoritmo = document.getElementById('algoritmo');
 const contenedorQuantum = document.getElementById('contenedor-quantum');
 const btnToggle = document.getElementById('btn-toggle');
@@ -75,7 +72,6 @@ function generarGrilla() {
 inputNumProcesos.addEventListener('input', generarGrilla);
 generarGrilla();
 
-// ---- NAVEGACIÓN VERTICAL CON ENTER ----
 tbodyEntradas.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -94,7 +90,6 @@ tbodyEntradas.addEventListener('keydown', (e) => {
     }
 });
 
-// ---- VARIABLES GLOBALES ----
 let pasosGantt = [];
 let pasoActual = 0;
 let procesosGlobales = [];
@@ -183,7 +178,6 @@ function iniciarModoDebug(gantt, stats, procesos) {
     renderizarMotorGrafico([], procesosGlobales, false, statsGlobales);
 }
 
-// ---- MOTOR GRÁFICO (CON LLEGADAS EN TODAS LAS COLAS Y SIN PUNTITOS) ----
 function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
     const contenedor = document.getElementById('gantt-container');
     const algoritmoActual = document.getElementById('algoritmo').value; 
@@ -197,7 +191,6 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
     let htmlFinal = `<div style="display: flex; flex-direction: column; gap: 55px; padding: 40px 20px 20px 40px;">`;
 
     for (let q = 1; q <= totalColas; q++) {
-        // Filtrar SOLO los bloques de esta cola
         let bloquesCarril = ganttData.filter(b => {
             if (algoritmoActual === 'MLQ') {
                 return b.colaExec === q; 
@@ -207,16 +200,11 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
 
         if (bloquesCarril.length === 0 && ganttData.length > 0) continue; 
 
-        // RASTREO INTELIGENTE DE LLEGADAS A ESTA COLA EXACTA
         let llegadasDeEstaCola = [];
         if (q === 1) {
-            // En Q1 los procesos llegan en su tlleg original
             procesos.forEach(p => llegadasDeEstaCola.push({ id: p.id, t: p.tlleg }));
         } else {
-            // En Q2, Q3, FCFS... llegan en el milisegundo exacto que cayeron de la cola anterior
             ganttData.forEach(b => {
-                // Buscamos procesos que estaban en la cola de arriba, que NO hayan terminado (!esFinal) 
-                // y que NO hayan sido retenidos en esa misma cola (!b.razon.includes('Retenido'))
                 if (b.colaExec === q - 1 && b.tipo === 'proceso' && !b.esFinal && !b.razon.includes('Retenido')) {
                     llegadasDeEstaCola.push({ id: b.id, t: b.fin });
                 }
@@ -224,8 +212,7 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
         }
 
         let nombreCola = algoritmoActual === 'MLQ' ? (q > qArray.length ? 'FCFS' : `Q${q}`) : 'CPU';
-
-        // Estructura principal del carril (Alineado a la izquierda SIEMPRE)
+        
         htmlFinal += `
             <div style="display: flex; align-items: flex-end; position: relative; width: max-content;">
                 <div style="position: absolute; left: -40px; font-weight: bold; color: var(--primary); font-size: 0.95rem; bottom: 0;">${nombreCola}</div>
@@ -233,7 +220,6 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
         `;
 
         if (bloquesCarril.length > 0) {
-            // Marca de inicio de esta cola
             htmlFinal += `
                 <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin-right: 2px;">
                     <div style="height: 6px; border-left: 1px solid var(--text-main);"></div>
@@ -242,11 +228,9 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
             `;
         }
 
-        // Dibujo de los bloques
         for (let idx = 0; idx < bloquesCarril.length; idx++) {
             let bloque = bloquesCarril[idx];
             
-            // Huecos internos dentro de la MISMA cola
             if (idx > 0) {
                 let bloqueAnterior = bloquesCarril[idx - 1];
                 if (bloque.inicio > bloqueAnterior.fin) {
@@ -273,11 +257,9 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
                 barraHTML = `<div style="width: 100%; height: 4px; background: transparent; z-index: 5;"></div>`;
             }
 
-            // LLEGADAS PARA TODAS LAS COLAS (Apiladas y con una rayita limpia sin puntitos)
             let llegadasHTML = '';
             let llegadasPorTiempo = {};
             
-            // Evaluamos si en el tiempo de este bloque hubo alguna llegada a esta cola
             let llegadasEnEsteBloque = llegadasDeEstaCola.filter(l => l.t >= bloque.inicio && l.t < bloque.fin);
             
             llegadasEnEsteBloque.forEach(l => {
@@ -294,7 +276,6 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
                 llegadasHTML += `
                     <div style="position: absolute; left: ${porcentaje}%; bottom: 8px; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%); z-index: 20;">
                         <div style="display: flex; flex-direction: column-reverse; align-items: center; margin-bottom: 2px;">${letrasHTML}</div>
-                        <!-- LÍNEA SÓLIDA CORTA Y LIMPIA (sin dashed) -->
                         <div style="height: 12px; border-left: 1.5px solid #94A3B8;"></div>
                         <div style="font-size: 0.65rem; color: #64748B; font-weight: normal; margin-top: 1px;">${tiempo}</div>
                     </div>
@@ -303,7 +284,7 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
 
             let minW = Math.max(bloque.duracion * 20, 25);
             
-            htmlFinal += `
+           htmlFinal += `
                 <div style="flex-grow: ${bloque.duracion}; min-width: ${minW}px; display: flex; flex-direction: column; justify-content: flex-end; position: relative;">
                     <div style="text-align: center; font-weight: 800; margin-bottom: 3px; color: var(--text-main); font-size: 0.95rem; ${estiloTexto}">${label}</div>
                     ${barraHTML}
@@ -317,18 +298,26 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
             `;
         }
 
-        // LISTA DE ESPERA (A LA DERECHA)
-        let procesosUnicosEnCola = [...new Set(bloquesCarril.filter(b => b.tipo === 'proceso').map(b => b.id))];
-        let listaColita = procesosUnicosEnCola.map(pid => {
-            let estaEjecutandoAhora = (!esResultadoFinal && pasoActual > 0 && pasosGantt[pasoActual - 1].id === pid && pasosGantt[pasoActual - 1].colaExec === q);
+        // ✨ MAGIA VISUAL: EL HISTORIAL CRONOLÓGICO EXACTO ✨
+        let bloquesDeProceso = bloquesCarril.filter(b => b.tipo === 'proceso');
+
+        // Mapeamos ABSOLUTAMENTE TODOS los bloques de la cola, sin omitir ni borrar a nadie
+        let listaColita = bloquesDeProceso.map(b => {
+            let esActualDebug = (!esResultadoFinal && pasoActual > 0 && pasosGantt[pasoActual - 1] === b);
             
-            if (!estaEjecutandoAhora) {
-                return `<span style="text-decoration: line-through 1.5px solid; opacity: 0.6;">${pid}</span>`;
+            // Si en este bloque el proceso se muere/termina, le ponemos la raya tachada
+            if (b.esFinal) {
+                return `<span style="text-decoration: line-through 1.5px solid; opacity: 0.6;">${b.id}</span>`;
             }
-            return `<span>${pid}</span>`;
+            // Si está en debug y no es el actual, lo bajamos de opacidad
+            if (!esResultadoFinal && !esActualDebug) {
+                return `<span style="opacity: 0.6;">${b.id}</span>`;
+            }
+            
+            return `<span>${b.id}</span>`;
         }).join(', ');
 
-        if (procesosUnicosEnCola.length > 0) {
+        if (bloquesDeProceso.length > 0) {
             htmlFinal += `
                 <div style="margin-left: 30px; margin-bottom: 2px; font-size: 0.95rem; font-weight: 800; color: var(--text-main); white-space: nowrap;">
                     ${listaColita}
