@@ -4,129 +4,165 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simulador de Algoritmos SO</title>
-    <meta name="google-site-verification" content="0r7_usUWeAr7MzgDxtTxKLavjD92idMfoCqL0K-Q_mI" />
     
     <link rel="icon" type="image/png" href="./src/assets/perfil_logo.png">
-    <!-- Importando la fuente moderna Poppins -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <header class="topbar">
-        <div style="display: flex; align-items: center; gap: 20px;">
-            <h2>Simulador SO</h2>
-            <button id="btn-toggle" class="btn-toggle-sidebar">
-                ◀ Ocultar Panel
-            </button>
+    <!-- Fondo animado para el efecto cristal -->
+    <div class="glass-bg">
+        <div class="blob blob-celeste"></div>
+        <div class="blob blob-plomo"></div>
+        <div class="blob blob-blanco"></div>
+    </div>
+
+    <header class="topbar glass-panel">
+        <div class="header-brand">
+            <h1 class="header-title">SO <span>Simulador</span></h1>
+            <span class="header-subtitle">Planificación de Procesos</span>
         </div>
-        <div class="selector-algoritmo">
-            <label for="algoritmo">Algoritmo:</label>
-            <select id="algoritmo">
-                <option value="FCFS">FCFS (First-Come, First-Served)</option>
-                <option value="SJF">SJF (Shortest Job First)</option>
-                <option value="RR">Round Robin</option>
-                <option value="PR">Prioridades (No apropiativo)</option>
-                <option value="MLQ">Colas Múltiples (MLFQ)</option>
-            </select>
+        
+        <div class="header-actions">
+            <!-- ✨ SELECTOR DE ALGORITMO PREMIUM ✨ -->
+            <div class="custom-select-wrapper">
+                <label for="algoritmo">Algoritmo:</label>
+                <div class="select-box">
+                    <select id="algoritmo" class="select-clean">
+                        <option value="FCFS">FCFS (First-Come, First-Served)</option>
+                        <option value="SJF">SJF (Shortest Job First)</option>
+                        <option value="RR">Round Robin</option>
+                        <option value="PR">Prioridades (No apropiativo)</option>
+                        <option value="MLQ">Colas Múltiples (MLFQ)</option>
+                    </select>
+                    <!-- Flecha SVG que gira -->
+                    <svg class="select-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+            </div>
+            
+            <button id="btn-toggle" class="btn-expandir" title="Ampliar Vista">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                </svg>
+                <span>Vista Full</span>
+            </button>
         </div>
     </header>
 
-    <main class="layout">
-        <aside class="panel-izquierdo">
-            <div class="control-procesos">
-                <label for="num-procesos">Número de procesos:</label>
-                <input type="number" id="num-procesos" value="3" min="1" max="10">
+    <main class="layout-main">
+        <aside class="sidebar">
+            <div class="card-panel glass-panel">
+                <div class="form-row">
+                    <label for="num-procesos">Procesos</label>
+                    <input type="number" id="num-procesos" value="5" min="1" max="15" class="input-clean">
+                </div>
+                
+                <div class="form-row">
+                    <label for="ctxt">Cambio de Contexto</label>
+                    <input type="number" id="ctxt" value="2" min="0" class="input-clean">
+                </div>
             </div>
 
-            <div class="tabla-container">
+            <div class="card-panel glass-panel panel-tabla">
                 <table id="tabla-entradas">
                     <thead>
                         <tr>
-                            <th>Proceso</th>
-                            <th>Tiempo de Ejecución</th>
-                            <th>Tiempo de Llegada</th>
-                            <th class="col-prio" style="display: none;">Prioridad</th>
+                            <th>Proc</th>
+                            <th>Tej</th>
+                            <th>Tlleg</th>
+                            <th class="col-prio" style="display: none;">Prio</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Generado con JS -->
+                        <!-- Generado dinámicamente -->
                     </tbody>
                 </table>
             </div>
 
-            <div class="controles-extra">
-                <label for="ctxt">Cambio de contexto (ctxt):</label>
-                <input type="number" id="ctxt" value="0" min="0">
-            </div>
-            
-            <div class="controles-extra" id="contenedor-quantum" style="display: none;">
-                <label for="quantum" style="color: var(--accent-gold);">Quantum (Q):</label>
-                <input type="number" id="quantum" value="2" min="1">
-            </div>
-            
-            <!-- NUEVO CONTENEDOR MLQ DINÁMICO -->
-            <div class="controles-extra" id="contenedor-mlq" style="display: none; flex-direction: column; align-items: flex-start; gap: 8px;">
-                <label for="mlq-quantums" style="color: #EF4444; font-size: 0.9rem; font-weight: 600;">Quantums (separados por coma):</label>
-                <input type="text" id="mlq-quantums" value="2, 4, 8" style="width: 100%; text-align: center; padding: 8px; border: 2px solid var(--border); border-radius: 6px; font-family: 'Poppins', sans-serif; color: var(--text-main); font-weight: 600; box-sizing: border-box;">
-            </div>
-
-            <div class="controles-extra" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
-                <label for="modo-debug" style="color: var(--primary); cursor: pointer;">🐞 Activar Modo Paso a Paso</label>
-                <input type="checkbox" id="modo-debug" style="width: auto; transform: scale(1.2); cursor: pointer;">
+            <div class="card-panel glass-panel" id="panel-dinamico">
+                <div class="form-group" id="contenedor-quantum" style="display: none;">
+                    <label for="quantum">Quantum General (Q)</label>
+                    <input type="number" id="quantum" value="2" min="1" class="input-clean">
+                </div>
+                
+                <div id="contenedor-mlq" style="display: none;">
+                    <div class="form-row">
+                        <label for="num-colas-mlq" class="label-highlight">N° Colas (MLQ)</label>
+                        <input type="number" id="num-colas-mlq" value="3" min="2" max="6" class="input-clean">
+                    </div>
+                    <div class="divider"></div>
+                    <label class="label-small">Asignación de Quantums</label>
+                    <div id="mlq-quantums-container" class="mlq-grid">
+                        <!-- Generado dinámicamente -->
+                    </div>
+                </div>
             </div>
 
-            <button id="btn-simular" class="btn-accion">Simular Algoritmo</button>
+            <div class="card-panel glass-panel debug-panel">
+                <label class="checkbox-wrapper">
+                    <input type="checkbox" id="modo-debug">
+                    <span class="checkbox-custom"></span>
+                    <span class="checkbox-label">Modo Paso a Paso</span>
+                </label>
+            </div>
+            
+            <button id="btn-simular" class="btn-primary glass-btn">
+                Ejecutar Simulación
+            </button>
         </aside>
 
-        <section class="panel-derecho">
-            <div class="tarjeta-resultado">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h3 style="margin: 0;">Diagrama de Gantt</h3>
-                <div id="controles-debug" style="display: none; gap: 10px;">
-                    <button id="btn-retroceder-paso" class="btn-accion" style="width: auto; margin: 0; padding: 8px 15px; background: #64748B; color: white;">⬅️ Retroceder</button>
-                    <button id="btn-siguiente-paso" class="btn-accion" style="width: auto; margin: 0; padding: 8px 15px; background: var(--accent-gold); color: #000;">Siguiente Paso ➡️</button>
+        <section class="content-area">
+            <div class="card-result glass-panel">
+                <div class="result-header">
+                    <h3>Diagrama de Gantt</h3>
+                    <div id="controles-debug" class="debug-controls" style="display: none;">
+                        <button id="btn-retroceder-paso" class="btn-secondary">Retroceder</button>
+                        <button id="btn-siguiente-paso" class="btn-primary-small">Siguiente</button>
+                    </div>
                 </div>
-            </div>
                 
-                <!-- Consola de explicación del Debug -->
-                <div id="consola-debug" style="display: none; background: #1E293B; color: #10B981; padding: 10px 15px; border-radius: 6px; font-family: monospace; font-size: 0.9rem; margin-bottom: 15px;">
-                    Esperando inicio de simulación...
+                <div id="consola-debug" class="console-box glass-inset" style="display: none;">
+                    > Esperando inicio...
                 </div>
 
-                <div id="gantt-container" class="gantt-container">
-                    <p class="placeholder">Ingresa los datos y presiona simular...</p>
+                <div id="gantt-container" class="gantt-wrapper">
+                    <div class="empty-state">
+                        <p>Los resultados del diagrama aparecerán aquí.</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="tarjeta-resultado">
+            <div class="card-result glass-panel">
                 <h3>Estadísticas</h3>
-                <table id="tabla-estadisticas">
-                    <thead>
-                        <tr>
-                            <th>Proceso</th>
-                            <th>Tiempo de Retorno</th>
-                            <th>Tiempo de Espera</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Generado con JS -->
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <th>Promedios</th>
-                            <th id="promedio-tret">0.00</th>
-                            <th id="promedio-tesp">0.00</th>
-                        </tr>
-                    </tfoot>
-                </table>
+                <div class="tabla-stats-wrapper">
+                    <table id="tabla-estadisticas" class="table-stats">
+                        <thead>
+                            <tr>
+                                <th>Proceso</th>
+                                <th>T. Retorno (Tret)</th>
+                                <th>T. Espera (Tesp)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Generado dinámicamente -->
+                        </tbody>
+                        <tfoot>
+                            <tr class="tfoot-promedios">
+                                <th>Promedios Globales</th>
+                                <th id="promedio-tret">0.00</th>
+                                <th id="promedio-tesp">0.00</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
             </div>
         </section>
     </main>
     <footer class="marca-personal">
-        <p>
-            &copy; <strong>Edgar Perez</strong> | ANDRADE CRAFT Systems<br>
-            <span class="sub-marca"> Desarrollado en por ahís, siuu</span>
-        </p>
+        <p>&copy; <strong>Edgar Perez</strong> | <span class="marca-brillante">ANDRADE CRAFT</span> Systems</p>
     </footer>
 
     <script type="module" src="./src/main.js"></script>

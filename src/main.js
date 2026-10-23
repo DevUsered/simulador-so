@@ -1,6 +1,7 @@
 import { simularFCFS, simularSJF, simularRR, simularPR, simularMLQ } from './scheduler.js';
 
-const colores = ['#3B82F6', '#10B981', '#6366F1', '#F59E0B', '#EC4899', '#14B8A6', '#8B5CF6'];
+// Colores pastel idénticos a los de la imagen
+const colores = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EC4899', '#14B8A6', '#6366F1'];
 
 document.querySelector('#tabla-entradas thead').innerHTML = `
     <tr>
@@ -10,42 +11,68 @@ document.querySelector('#tabla-entradas thead').innerHTML = `
         <th class="col-prio" style="display: none;">Prio</th>
     </tr>
 `;
-document.querySelector('#tabla-estadisticas thead').innerHTML = `
-    <tr>
-        <th>Proc</th>
-        <th>Tret</th>
-        <th>Tes</th>
-    </tr>
-`;
+document.querySelector('#tabla-estadisticas tbody').innerHTML = ``;
 
 const inputNumProcesos = document.getElementById('num-procesos');
 const tbodyEntradas = document.querySelector('#tabla-entradas tbody');
 const btnSimular = document.getElementById('btn-simular');
 const selectAlgoritmo = document.getElementById('algoritmo');
 const contenedorQuantum = document.getElementById('contenedor-quantum');
+const contenedorMLQ = document.getElementById('contenedor-mlq');
 const btnToggle = document.getElementById('btn-toggle');
-const layoutMain = document.querySelector('.layout');
+const layoutMain = document.querySelector('.layout-main');
 
 btnToggle.addEventListener('click', () => {
     layoutMain.classList.toggle('sidebar-oculta');
+    const spanText = btnToggle.querySelector('span');
+    
     if (layoutMain.classList.contains('sidebar-oculta')) {
-        btnToggle.innerHTML = '▶ Mostrar Panel';
+        spanText.innerHTML = 'Mostrar Panel';
     } else {
-        btnToggle.innerHTML = '◀ Ocultar Panel';
+        spanText.innerHTML = 'Ampliar Vista';
     }
 });
 
 selectAlgoritmo.addEventListener('change', (e) => {
     const columnasPrio = document.querySelectorAll('.col-prio');
-    const contenedorMLQ = document.getElementById('contenedor-mlq');
 
     contenedorQuantum.style.display = (e.target.value === 'RR') ? 'flex' : 'none'; 
-    contenedorMLQ.style.display = (e.target.value === 'MLQ') ? 'flex' : 'none'; 
+    contenedorMLQ.style.display = (e.target.value === 'MLQ') ? 'block' : 'none'; 
 
     columnasPrio.forEach(col => {
         col.style.display = (e.target.value === 'PR') ? 'table-cell' : 'none';
-    })
+    });
 });
+
+const inputNumColasMLQ = document.getElementById('num-colas-mlq');
+const mlqQuantumsContainer = document.getElementById('mlq-quantums-container');
+
+function generarInputsMLQ() {
+    let numColas = parseInt(inputNumColasMLQ.value) || 3;
+    if (numColas < 2) numColas = 2; 
+    
+    mlqQuantumsContainer.innerHTML = '';
+    
+    for (let i = 1; i < numColas; i++) {
+        let qValor = Math.pow(2, i); 
+        mlqQuantumsContainer.innerHTML += `
+            <div class="form-group">
+                <label>Q${i}</label>
+                <input type="number" class="input-clean" value="${qValor}" min="1">
+            </div>
+        `;
+    }
+    mlqQuantumsContainer.innerHTML += `
+        <div class="form-group">
+            <label>Q${numColas}</label>
+            <div class="fcfs-label">FCFS</div>
+        </div>
+    `;
+}
+inputNumColasMLQ.addEventListener('input', generarInputsMLQ);
+generarInputsMLQ(); 
+
+selectAlgoritmo.dispatchEvent(new Event('change'));
 
 function obtenerLetra(index) { return String.fromCharCode(65 + index); }
 
@@ -60,10 +87,14 @@ function generarGrilla() {
         const letra = obtenerLetra(i);
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td style="font-weight: 700; color: #1E293B; background-color: ${colores[i % colores.length]}30; border-radius: 6px;">${letra}</td>
-            <td><input type="number" class="teje input-grid" value="1" min="1"></td>
-            <td><input type="number" class="tlleg input-grid" value="0" min="0"></td>
-            <td class="col-prio" style="display: ${mostrarPrio};"><input type="number" class="prio input-grid" value="1" min="1"></td>
+            <td>
+                <div class="letra-proceso" style="background-color: ${colores[i % colores.length]}1A; border: 1px solid ${colores[i % colores.length]}40; color: ${colores[i % colores.length]};">
+                    ${letra}
+                </div>
+            </td>
+            <td><input type="number" class="td-input teje" value="1" min="1"></td>
+            <td><input type="number" class="td-input tlleg" value="0" min="0"></td>
+            <td class="col-prio" style="display: ${mostrarPrio};"><input type="number" class="td-input prio" value="1" min="1"></td>
         `;
         tbodyEntradas.appendChild(tr);
     }
@@ -75,17 +106,26 @@ generarGrilla();
 tbodyEntradas.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
+        
         const inputsTeje = Array.from(tbodyEntradas.querySelectorAll('.teje'));
         const inputsTlleg = Array.from(tbodyEntradas.querySelectorAll('.tlleg'));
         const inputsPrio = Array.from(tbodyEntradas.querySelectorAll('.prio'));
+        
         const todosLosInputs = [...inputsTeje, ...inputsTlleg, ...inputsPrio];
         
         const currentIndex = todosLosInputs.indexOf(e.target);
-        if (currentIndex > -1 && currentIndex < todosLosInputs.length - 1) {
-            todosLosInputs[currentIndex + 1].focus();
-            todosLosInputs[currentIndex + 1].select();
-        } else if (currentIndex === todosLosInputs.length - 1) {
-            btnSimular.focus();
+        if (currentIndex > -1) {
+            let nextIndex = currentIndex + 1;
+            while (nextIndex < todosLosInputs.length && todosLosInputs[nextIndex].closest('td').style.display === 'none') {
+                nextIndex++;
+            }
+            
+            if (nextIndex < todosLosInputs.length) {
+                todosLosInputs[nextIndex].focus();
+                todosLosInputs[nextIndex].select();
+            } else {
+                btnSimular.focus();
+            }
         }
     }
 });
@@ -125,18 +165,24 @@ btnSimular.addEventListener('click', () => {
     }
     else if(algoritmo === 'PR'){ resultado = simularPR(procesos, ctxt); }
     else if(algoritmo === 'MLQ'){
-      let valores = document.getElementById('mlq-quantums').value.split(',');
-      let quantums = valores.map(v => parseInt(v.trim())).filter(v => !isNaN(v) && v > 0);
-      if(quantums.length === 0) quantums = [2, 4, 8]; 
+      const inputsQ = Array.from(document.querySelectorAll('#mlq-quantums-container input'));
+      let quantums = inputsQ.map(inp => parseInt(inp.value)).filter(v => !isNaN(v) && v > 0);
+      if(quantums.length === 0) quantums = [2, 4]; 
       resultado = simularMLQ(procesos, ctxt, quantums);
     }
 
     if (resultado) {
         if (esDebug) {
+            document.getElementById('controles-debug').style.display = 'flex';
+            document.getElementById('consola-debug').style.display = 'block';
+            document.getElementById('btn-siguiente-paso').style.display = 'inline-block';
+            
             iniciarModoDebug(resultado.gantt, resultado.stats, procesos);
         } else {
-            document.getElementById('btn-siguiente-paso').style.display = 'none';
+            document.getElementById('controles-debug').style.display = 'none';
             document.getElementById('consola-debug').style.display = 'none';
+            document.getElementById('btn-siguiente-paso').style.display = 'none';
+            
             renderizarMotorGrafico(resultado.gantt, procesos, true, resultado.stats);
         }
     }
@@ -181,14 +227,14 @@ function iniciarModoDebug(gantt, stats, procesos) {
 function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
     const contenedor = document.getElementById('gantt-container');
     const algoritmoActual = document.getElementById('algoritmo').value; 
-    let qArray = document.getElementById('mlq-quantums').value.split(',').filter(v => v.trim() !== '');
+    let qArray = Array.from(document.querySelectorAll('#mlq-quantums-container input'));
     
     let totalColas = 1;
     if (algoritmoActual === 'MLQ') {
         totalColas = ganttData.length > 0 ? Math.max(...ganttData.map(b => b.colaExec || 1)) : 1;
     }
 
-    let htmlFinal = `<div style="display: flex; flex-direction: column; padding: 40px 250px 20px 40px;">`; // Padding derecho extra para que las colitas no se corten
+    let htmlFinal = `<div style="display: flex; flex-direction: column; padding: 60px 250px 20px 40px;">`; 
 
     for (let q = 1; q <= totalColas; q++) {
         let bloquesCarril = ganttData.filter(b => {
@@ -231,15 +277,15 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
         
         htmlFinal += `
             <div style="display: flex; align-items: flex-end; position: relative; width: max-content; margin-bottom: ${margenInferior}px;">
-                <div style="position: absolute; left: -40px; font-weight: bold; color: var(--primary); font-size: 0.95rem; bottom: 0;">${nombreCola}</div>
-                <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: #64748B; z-index: 0;"></div>
+                <div style="position: absolute; left: -40px; font-weight: 700; color: var(--brand-blue); font-size: 0.9rem; bottom: 0;">${nombreCola}</div>
+                <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: #CBD5E1; z-index: 0;"></div>
         `;
 
         if (bloquesCarril.length > 0) {
             htmlFinal += `
                 <div style="position: relative; display: flex; flex-direction: column; align-items: center; margin-right: 2px;">
-                    <div style="height: 6px; border-left: 1px solid var(--text-main);"></div>
-                    <div style="font-size: 0.75rem; font-weight: normal; margin-top: 2px; color: var(--text-main);">${bloquesCarril[0].inicio}</div>
+                    <div style="height: 6px; border-left: 1px solid #111827;"></div>
+                    <div style="font-size: 0.75rem; font-weight: 600; margin-top: 2px; color: #111827;">${bloquesCarril[0].inicio}</div>
                 </div>
             `;
         }
@@ -261,14 +307,14 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
             let isIdle = bloque.tipo === 'idle';
 
             let estiloTexto = (bloque.esFinal && bloque.tipo === 'proceso') 
-                ? 'text-decoration: line-through 2px solid; opacity: 0.7; font-style: italic;' 
+                ? 'text-decoration: line-through 2px solid; opacity: 0.6;' 
                 : '';
 
             let barraHTML = '';
             if (bloque.tipo === 'proceso') {
-                barraHTML = `<div style="background-color: ${bloque.color}; width: 100%; height: 4px; border-radius: 2px; position: relative; z-index: 5;"></div>`;
+                barraHTML = `<div style="background-color: ${bloque.color}; width: 100%; height: 6px; border-radius: 3px; position: relative; z-index: 5;"></div>`;
             } else if (isCS) {
-                barraHTML = `<div style="width: 100%; height: 8px; background: repeating-linear-gradient(-45deg, transparent, transparent 3px, #64748B 3px, #64748B 4px); z-index: 5;"></div>`;
+                barraHTML = `<div style="width: 100%; height: 8px; background: repeating-linear-gradient(-45deg, transparent, transparent 3px, #CBD5E1 3px, #CBD5E1 4px); z-index: 5;"></div>`;
             } else if (isIdle) {
                 barraHTML = `<div style="width: 100%; height: 4px; background: transparent; z-index: 5;"></div>`;
             }
@@ -287,10 +333,10 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
                 let tiempo = parseInt(tiempoStr);
                 let porcentaje = ((tiempo - bloque.inicio) / bloque.duracion) * 100;
                 
-                let letrasHTML = letras.map(l => `<div style="font-size: 0.8rem; color: var(--text-main); font-weight: normal; line-height: 1.2;">${l}</div>`).join('');
+                let letrasHTML = letras.map(l => `<div style="font-size: 0.8rem; color: #64748B; font-weight: 600; line-height: 1.2;">${l}</div>`).join('');
                 let numVisual = marcasExistentes.has(tiempo) 
                     ? '' 
-                    : `<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.65rem; color: #64748B; background: #ffffff; padding: 0 2px; z-index: 2;">${tiempo}</div>`;
+                    : `<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.65rem; color: #64748B; background: #FFFFFF; padding: 0 2px; z-index: 2;">${tiempo}</div>`;
 
                     llegadasHTML += `
                     <div style="position: absolute; left: ${porcentaje}%; top: 100%; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%); z-index: 20; padding-top: 2px;">
@@ -307,13 +353,13 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
             
            htmlFinal += `
                 <div style="flex-grow: ${bloque.duracion}; min-width: ${minW}px; display: flex; flex-direction: column; justify-content: flex-end; position: relative;">
-                    <div style="text-align: center; font-weight: 800; margin-bottom: 3px; color: var(--text-main); font-size: 0.95rem; ${estiloTexto}">${label}</div>
+                    <div style="text-align: center; font-weight: 700; margin-bottom: 5px; color: #111827; font-size: 0.9rem; ${estiloTexto}">${label}</div>
                     ${barraHTML}
                     ${llegadasHTML}
                     
                     <div style="position: absolute; right: 0; bottom: -20px; display: flex; flex-direction: column; align-items: center; transform: translateX(50%); z-index: 10;">
-                        <div style="height: 6px; border-left: 1px solid var(--text-main);"></div>
-                        <div style="font-size: 0.75rem; font-weight: normal; color: var(--text-main); margin-top: 2px;">${bloque.fin}</div>
+                        <div style="height: 6px; border-left: 1px solid #111827;"></div>
+                        <div style="font-size: 0.75rem; font-weight: 600; color: #111827; margin-top: 2px;">${bloque.fin}</div>
                     </div>
                 </div>
             `;
@@ -323,14 +369,14 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
 
         let listaColita = bloquesDeProceso.map(b => {
             let esActualDebug = (!esResultadoFinal && pasoActual > 0 && pasosGantt[pasoActual - 1] === b);
-            if (b.esFinal) return `<span style="text-decoration: line-through 1.5px solid; opacity: 0.6;">${b.id}</span>`;
-            if (!esResultadoFinal && !esActualDebug) return `<span style="opacity: 0.6;">${b.id}</span>`;
+            if (b.esFinal) return `<span style="text-decoration: line-through 2px solid; opacity: 0.4;">${b.id}</span>`;
+            if (!esResultadoFinal && !esActualDebug) return `<span style="opacity: 0.4;">${b.id}</span>`;
             return `<span>${b.id}</span>`;
         }).join(', ');
 
         if (bloquesDeProceso.length > 0) {
             htmlFinal += `
-                <div style="position: absolute; right: -15px; bottom: 40px; transform: translateX(100%); font-size: 0.85rem; font-weight: 800; color: var(--text-main); white-space: nowrap;">
+                <div style="position: absolute; right: -15px; bottom: 60px; transform: translateX(100%); font-size: 0.85rem; font-weight: 600; color: #64748B; white-space: nowrap;">
                     ${listaColita}
                 </div>
             `;
@@ -353,11 +399,12 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
 
     if (!esResultadoFinal) {
         if (pasoActual === 0) {
-            if(consola) consola.innerHTML = `> 🔵 <b>Simulación lista.</b> Esperando iniciar...`;
+            if(consola) consola.innerHTML = `> 🔵 Simulación lista. Esperando iniciar...`;
         } else {
             const bloqueActual = pasosGantt[pasoActual - 1];
             let icono = bloqueActual.tipo === 'proceso' ? '🟢' : (bloqueActual.tipo === 'cs' ? '⚙️' : '💤');
             
+            // ✨ BUG DE CONSOLA REPARADO CORRECTAMENTE SIN GUIONES EXTRA ✨
             let msj = `> [${bloqueActual.inicio} - ${bloqueActual.fin}] ${icono} ${bloqueActual.razon}`;
             if(consola) consola.innerHTML = msj;
         }
@@ -368,7 +415,7 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
         }
 
         if (pasoActual === pasosGantt.length) {
-            if(consola) consola.innerHTML += `<br>> ✅ <b>Simulación completada.</b>`;
+            if(consola) consola.innerHTML += `<br>> ✅ Simulación completada.`;
             if(btnSig) {
                 btnSig.disabled = true; btnSig.innerText = 'Finalizado ✔️'; btnSig.style.opacity = '0.5';
             }
@@ -383,6 +430,7 @@ function renderizarMotorGrafico(ganttData, procesos, esResultadoFinal, stats) {
         mostrarEstadisticas(stats, tbodyStats); 
     }
 }
+
 function mostrarEstadisticas(stats, tbodyStats) {
     let sumaTret = 0, sumaTesp = 0;
     if (tbodyStats) tbodyStats.innerHTML = '';
@@ -390,7 +438,7 @@ function mostrarEstadisticas(stats, tbodyStats) {
     if (stats && stats.length > 0) {
         stats.sort((a, b) => a.id.localeCompare(b.id)).forEach(s => {
             sumaTret += s.tret; sumaTesp += s.tesp;
-            if (tbodyStats) tbodyStats.innerHTML += `<tr><td style="font-weight: bold;">${s.id}</td><td>${s.tret}</td><td>${s.tesp}</td></tr>`;
+            if (tbodyStats) tbodyStats.innerHTML += `<tr><td style="font-weight: 600;">${s.id}</td><td>${s.tret}</td><td>${s.tesp}</td></tr>`;
         });
         document.getElementById('promedio-tret').innerText = (sumaTret / stats.length).toFixed(2);
         document.getElementById('promedio-tesp').innerText = (sumaTesp / stats.length).toFixed(2);
