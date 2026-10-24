@@ -144,25 +144,23 @@ export function simularRR(procesos, ctxt, quantum) {
     let indexLlegadas = 0;
     let ultimoProcesoId = null;
 
-    const encolarLlegadas = (hastaTiempo, estrictoMenor = false) => {
-        while (indexLlegadas < pendientes.length) {
-            let llega = pendientes[indexLlegadas].tlleg;
-            if (estrictoMenor ? llega < hastaTiempo : llega <= hastaTiempo) {
-                cola.push(pendientes[indexLlegadas]);
-                indexLlegadas++;
-            } else break;
+    const encolarLlegadas = (hastaTiempo) => {
+        while (indexLlegadas < pendientes.length && pendientes[indexLlegadas].tlleg <= hastaTiempo) {
+            cola.push(pendientes[indexLlegadas]);
+            indexLlegadas++;
         }
     };
 
-    encolarLlegadas(tiempoActual, false);
+    encolarLlegadas(tiempoActual);
 
     while (cola.length > 0 || indexLlegadas < pendientes.length) {
+        
         if (cola.length === 0) {
             let proximo = pendientes[indexLlegadas];
-            gantt.push({ tipo: 'idle', duracion: proximo.tlleg - tiempoActual, inicio: tiempoActual, fin: proximo.tlleg, razon: "CPU Inactiva" });
+            gantt.push({ tipo: 'idle', duracion: proximo.tlleg - tiempoActual, inicio: tiempoActual, fin: proximo.tlleg, razon: "CPU inactiva" });
             tiempoActual = proximo.tlleg;
-            ultimoProcesoId = null;
-            encolarLlegadas(tiempoActual, false);
+            encolarLlegadas(tiempoActual);
+            ultimoProcesoId = null; // Al estar inactiva, el siguiente proceso entra sin pagar cambio de contexto
         }
 
         let p = cola.shift(); 
@@ -170,8 +168,9 @@ export function simularRR(procesos, ctxt, quantum) {
         if (ultimoProcesoId !== null && ultimoProcesoId !== p.id && ctxt > 0) {
             let inicioCs = tiempoActual;
             tiempoActual += ctxt;
-            gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoActual, razon: `Cambio de Contexto` });
-            encolarLlegadas(tiempoActual, false); 
+            gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoActual, razon: `Cambio de contexto` });
+            
+            encolarLlegadas(tiempoActual); 
         }
 
         let tiempoEjecucion = Math.min(p.tejeRestante, quantum);
@@ -185,7 +184,7 @@ export function simularRR(procesos, ctxt, quantum) {
              inicio: inicioProc, fin: tiempoActual, razon: `Ejecuta ${p.id}`, esFinal: termino
         });
 
-        encolarLlegadas(tiempoActual, true);
+        encolarLlegadas(tiempoActual);
 
         if (!termino) {
             cola.push(p);
@@ -195,7 +194,6 @@ export function simularRR(procesos, ctxt, quantum) {
             stats.push({ id: p.id, tf: tiempoActual, tret, tesp });
         }
 
-        encolarLlegadas(tiempoActual, false);
         ultimoProcesoId = p.id;
     }
 
