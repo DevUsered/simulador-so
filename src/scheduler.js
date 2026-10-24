@@ -249,6 +249,9 @@ export function simularMLQ(procesos, ctxt, quantums) {
         let sobrantesSiguienteCola = [];
         let ultimoProcesoId = null;
 
+        let procesoEnGuardadoMismaCola = null;
+        let procesoEnGuardadoSiguienteCola = null;
+
         procesosActivos.sort((a, b) => {
             if (a.tllegCola !== b.tllegCola) return a.tllegCola - b.tllegCola;
             if (a.ticket !== b.ticket) return a.ticket - b.ticket;
@@ -271,8 +274,12 @@ export function simularMLQ(procesos, ctxt, quantums) {
 
         encolar(tiempoQ, false);
 
-        while (cola.length > 0 || indexLlegadas < procesosActivos.length) {
-            if (cola.length === 0) {
+        while (cola.length > 0 || indexLlegadas < procesosActivos.length || procesoEnGuardadoMismaCola !== null) {
+            if(cola.length === 0 && procesoEnGuardadoMismaCola !== null){
+                cola.push(procesoEnGuardadoMismaCola);
+                procesoEnGuardadoMismaCola = null;
+            }
+            if (cola.length === 0 ) {
                 let proximo = procesosActivos[indexLlegadas];
                 let inicioIdle = tiempoQ;
                 tiempoQ = proximo.tllegCola;
@@ -287,7 +294,27 @@ export function simularMLQ(procesos, ctxt, quantums) {
                 let inicioCs = tiempoQ;
                 tiempoQ += ctxt;
                 gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoQ, colaExec: q + 1, razon: 'Cambio de contexto' });
-                encolar(tiempoQ, false); 
+                encolar(tiempoQ, true); 
+                
+                if(procesoEnGuardadoMismaCola !== null){
+                    cola.push(procesoEnGuardadoMismaCola);
+                    procesoEnGuardadoMismaCola = null;
+                }
+
+                if(procesoEnGuardadoSiguienteCola !== null){
+                    sobrantesSiguienteCola.push(procesoEnGuardadoSiguienteCola);
+                    procesoEnGuardadoSiguienteCola = null;
+                }
+                encolar(tiempoQ, false);
+            }else{
+                if(procesoEnGuardadoMismaCola !== null){
+                    cola.push(procesoEnGuardadoMismaCola);
+                    procesoEnGuardadoMismaCola = null;
+                }
+                if(procesoEnGuardadoSiguienteCola !== null){
+                    sobrantesSiguienteCola.push(procesoEnGuardadoSiguienteCola);
+                    procesoEnGuardadoSiguienteCola = null;
+                }
             }
 
             let tiempoEjecucion = Math.min(p.tejeRestante, quantum);
@@ -313,17 +340,18 @@ export function simularMLQ(procesos, ctxt, quantums) {
             } else if (seQuedaEnMismaCola) {
                 p.tllegCola = tiempoQ; 
                 p.ticket = ++globalTicket; 
-                cola.push(p); 
+                procesoEnGuardadoMismaCola = p;
             } else {
                 p.tllegCola = tiempoQ;
                 p.ticket = ++globalTicket; 
-                sobrantesSiguienteCola.push(p);
+                procesoEnGuardadoSiguienteCola = p;
             }
-
-            encolar(tiempoQ, false);
             ultimoProcesoId = p.id;
         }
-        
+        if(procesoEnGuardadoSiguienteCola !== null){
+            sobrantesSiguienteCola.push(procesoEnGuardadoSiguienteCola);
+            procesoEnGuardadoSiguienteCola = null;
+        }
         procesosActivos = [...sobrantesSiguienteCola];
         if (procesosActivos.length === 0) break;
     }
