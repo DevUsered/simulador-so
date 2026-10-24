@@ -306,7 +306,7 @@ export function simularMLQ(procesos, ctxt, quantums) {
                     procesoEnGuardadoSiguienteCola = null;
                 }
                 encolar(tiempoQ, false);
-            }else{
+            } else {
                 if(procesoEnGuardadoMismaCola !== null){
                     cola.push(procesoEnGuardadoMismaCola);
                     procesoEnGuardadoMismaCola = null;
@@ -346,6 +346,9 @@ export function simularMLQ(procesos, ctxt, quantums) {
                 p.ticket = ++globalTicket; 
                 procesoEnGuardadoSiguienteCola = p;
             }
+            
+            encolar(tiempoQ, false);
+
             ultimoProcesoId = p.id;
         }
         if(procesoEnGuardadoSiguienteCola !== null){
