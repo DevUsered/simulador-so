@@ -3,29 +3,21 @@ export function simularFCFS(procesos, ctxt) {
     let stats = [];
     let tiempoActual = 0;
     
-    // El sistema operativo arranca (cobra contexto inicial solo si empieza en 0)
-    if (ctxt > 0) {
-        gantt.push({ tipo: 'cs', duracion: ctxt, inicio: 0, fin: ctxt, razon: 'Arranque del SO' });
-        tiempoActual = ctxt;
-    }
-
     let listos = [...procesos].sort((a, b) => a.tlleg !== b.tlleg ? a.tlleg - b.tlleg : a.id.localeCompare(b.id));
     let ultimoProcesoId = null;
-    let esPrimerProceso = true;
 
     listos.forEach((p) => {
         if (tiempoActual < p.tlleg) {
-            gantt.push({ tipo: 'idle', duracion: p.tlleg - tiempoActual, inicio: tiempoActual, fin: p.tlleg, razon: "CPU inactiva." });
+            gantt.push({ tipo: 'idle', duracion: p.tlleg - tiempoActual, inicio: tiempoActual, fin: p.tlleg, razon: "CPU inactiva" });
             tiempoActual = p.tlleg;
-            ultimoProcesoId = null;
+            ultimoProcesoId = null; // Al estar inactiva, el siguiente proceso entra sin costo
         }
 
-        if (esPrimerProceso) { ultimoProcesoId = p.id; esPrimerProceso = false; }
-
+        // Cambio de contexto SOLO si pasamos de un proceso a OTRO distinto
         if (ultimoProcesoId !== null && ultimoProcesoId !== p.id && ctxt > 0) {
             let inicioCs = tiempoActual;
             tiempoActual += ctxt;
-            gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoActual, razon: `Cambio de contexto.` });
+            gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoActual, razon: `Cambio de contexto` });
         }
 
         let inicioProc = tiempoActual;
@@ -33,7 +25,7 @@ export function simularFCFS(procesos, ctxt) {
         
         gantt.push({ tipo: 'proceso', id: p.id, color: p.color, duracion: p.teje, inicio: inicioProc, fin: tiempoActual, razon: `Se ejecuta ${p.id}`, esFinal: true });
 
-        // ✨ FÓRMULA UNIVERSAL
+        // FÓRMULA UNIVERSAL
         let tret = tiempoActual - p.tlleg; 
         let tesp = tret - p.teje;          
         stats.push({ id: p.id, tf: tiempoActual, tret, tesp });
@@ -96,15 +88,9 @@ export function simularPR(procesos, ctxt) {
     let gantt = [];
     let stats = [];
     let tiempoActual = 0;
-    
-    if (ctxt > 0) {
-        gantt.push({ tipo: 'cs', duracion: ctxt, inicio: 0, fin: ctxt, razon: 'Arranque del SO' });
-        tiempoActual = ctxt;
-    }
 
     let pendientes = [...procesos];
     let ultimoProcesoId = null;
-    let esPrimerProceso = true;
 
     while (pendientes.length > 0) {
         let disponibles = pendientes.filter(p => p.tlleg <= tiempoActual);
@@ -118,12 +104,10 @@ export function simularPR(procesos, ctxt) {
 
             let p = disponibles[0];
 
-            if (esPrimerProceso) { ultimoProcesoId = p.id; esPrimerProceso = false; }
-
             if (ultimoProcesoId !== null && ultimoProcesoId !== p.id && ctxt > 0) {
                 let inicioCs = tiempoActual;
                 tiempoActual += ctxt;
-                gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoActual, razon: `Cambio de contexto.` });
+                gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoActual, razon: `Cambio de contexto` });
             }
 
             let inicioProc = tiempoActual;
@@ -131,7 +115,6 @@ export function simularPR(procesos, ctxt) {
 
             gantt.push({ tipo: 'proceso', id: p.id, color: p.color, duracion: p.teje, inicio: inicioProc, fin: tiempoActual, razon: `Se ejecuta ${p.id}`, esFinal: true });
 
-            // ✨ FÓRMULA UNIVERSAL
             let tret = tiempoActual - p.tlleg; 
             let tesp = tret - p.teje;          
             stats.push({ id: p.id, tf: tiempoActual, tret, tesp });
@@ -140,7 +123,7 @@ export function simularPR(procesos, ctxt) {
             ultimoProcesoId = p.id;
         } else {
             let proximo = [...pendientes].sort((a, b) => a.tlleg - b.tlleg)[0];
-            gantt.push({ tipo: 'idle', duracion: proximo.tlleg - tiempoActual, inicio: tiempoActual, fin: proximo.tlleg, razon: "CPU inactiva." });
+            gantt.push({ tipo: 'idle', duracion: proximo.tlleg - tiempoActual, inicio: tiempoActual, fin: proximo.tlleg, razon: "CPU inactiva" });
             tiempoActual = proximo.tlleg;
             ultimoProcesoId = null;
         }
@@ -154,18 +137,12 @@ export function simularRR(procesos, ctxt, quantum) {
     let stats = [];
     let tiempoActual = 0;
     
-    if (ctxt > 0) {
-        gantt.push({ tipo: 'cs', duracion: ctxt, inicio: 0, fin: ctxt, razon: 'Arranque del SO' });
-        tiempoActual = ctxt;
-    }
-    
     let pendientes = procesos.map(p => ({ ...p, tejeRestante: p.teje }));
     pendientes.sort((a, b) => a.tlleg !== b.tlleg ? a.tlleg - b.tlleg : a.id.localeCompare(b.id));
 
     let cola = [];
     let indexLlegadas = 0;
     let ultimoProcesoId = null;
-    let esPrimerProceso = true;
 
     const encolarLlegadas = (hastaTiempo, estrictoMenor = false) => {
         while (indexLlegadas < pendientes.length) {
@@ -182,15 +159,13 @@ export function simularRR(procesos, ctxt, quantum) {
     while (cola.length > 0 || indexLlegadas < pendientes.length) {
         if (cola.length === 0) {
             let proximo = pendientes[indexLlegadas];
-            gantt.push({ tipo: 'idle', duracion: proximo.tlleg - tiempoActual, inicio: tiempoActual, fin: proximo.tlleg, razon: "CPU Inactiva." });
+            gantt.push({ tipo: 'idle', duracion: proximo.tlleg - tiempoActual, inicio: tiempoActual, fin: proximo.tlleg, razon: "CPU Inactiva" });
             tiempoActual = proximo.tlleg;
             ultimoProcesoId = null;
             encolarLlegadas(tiempoActual, false);
         }
 
         let p = cola.shift(); 
-
-        if (esPrimerProceso) { ultimoProcesoId = p.id; esPrimerProceso = false; }
 
         if (ultimoProcesoId !== null && ultimoProcesoId !== p.id && ctxt > 0) {
             let inicioCs = tiempoActual;
@@ -215,7 +190,6 @@ export function simularRR(procesos, ctxt, quantum) {
         if (!termino) {
             cola.push(p);
         } else {
-            // ✨ FÓRMULA UNIVERSAL
             let tret = tiempoActual - p.tlleg;
             let tesp = tret - p.teje;
             stats.push({ id: p.id, tf: tiempoActual, tret, tesp });
@@ -233,7 +207,6 @@ export function simularMLQ(procesos, ctxt, quantums) {
     let stats = [];
     let globalTicket = 0; 
 
-    // Mantenemos p.tlleg (Llegada original) intacta para la estadística final
     let procesosActivos = procesos.map(p => ({
         ...p,
         tejeRestante: p.teje,
@@ -254,20 +227,9 @@ export function simularMLQ(procesos, ctxt, quantums) {
             return a.id.localeCompare(b.id);
         });
         
-        let tiempoQ = 0;
-        if (q === 0) {
-            if (ctxt > 0) {
-                gantt.push({ tipo: 'cs', duracion: ctxt, inicio: 0, fin: ctxt, colaExec: 1, razon: 'Arranque SO' });
-                tiempoQ = ctxt;
-            }
-        } else {
-            tiempoQ = procesosActivos.length > 0 ? procesosActivos[0].tllegCola : 0;
-        }
-        
+        let tiempoQ = procesosActivos.length > 0 ? procesosActivos[0].tllegCola : 0;
         let cola = [];
         let indexLlegadas = 0;
-        let primerTiempoCaida = null; 
-        let esPrimerProcesoDeLaCola = true;
 
         const encolar = (hastaTiempo, estrictoMenor = false) => {
             while (indexLlegadas < procesosActivos.length) {
@@ -292,8 +254,6 @@ export function simularMLQ(procesos, ctxt, quantums) {
             }
 
             let p = cola.shift();
-
-            if (esPrimerProcesoDeLaCola) { ultimoProcesoId = p.id; esPrimerProcesoDeLaCola = false; }
 
             if (ultimoProcesoId !== null && ultimoProcesoId !== p.id && ctxt > 0) {
                 let inicioCs = tiempoQ;
@@ -340,7 +300,7 @@ export function simularMLQ(procesos, ctxt, quantums) {
         if (procesosActivos.length === 0) break;
     }
 
-    // 3. LA COLA FINAL FCFS
+    // LA COLA FINAL FCFS
     if (procesosActivos.length > 0) {
         let qFCFS = numColas + 1;
         let ultimoProcesoId = null;
@@ -354,7 +314,6 @@ export function simularMLQ(procesos, ctxt, quantums) {
         let tiempoQ = procesosActivos.length > 0 ? procesosActivos[0].tllegCola : 0;
         let cola = [];
         let indexLlegadas = 0;
-        let esPrimerProcesoDeLaCola = true;
 
         const encolar = (hastaTiempo) => {
             while (indexLlegadas < procesosActivos.length) {
@@ -378,8 +337,6 @@ export function simularMLQ(procesos, ctxt, quantums) {
             }
 
             let p = cola.shift();
-
-            if (esPrimerProcesoDeLaCola) { ultimoProcesoId = p.id; esPrimerProcesoDeLaCola = false; }
             
             if (ultimoProcesoId !== null && ultimoProcesoId !== p.id && ctxt > 0) {
                 let inicioCs = tiempoQ;
