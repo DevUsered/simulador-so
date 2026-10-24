@@ -143,34 +143,62 @@ export function simularRR(procesos, ctxt, quantum) {
     let cola = [];
     let indexLlegadas = 0;
     let ultimoProcesoId = null;
+    let procesoEnGuardado = null; // Mantiene el proceso desalojado hasta que termine el CS
 
-    const encolarLlegadas = (hastaTiempo) => {
-        while (indexLlegadas < pendientes.length && pendientes[indexLlegadas].tlleg <= hastaTiempo) {
-            cola.push(pendientes[indexLlegadas]);
-            indexLlegadas++;
+    const encolarLlegadas = (hastaTiempo, estrictoMenor = false) => {
+        while (indexLlegadas < pendientes.length) {
+            let llega = pendientes[indexLlegadas].tlleg;
+            if (estrictoMenor ? llega < hastaTiempo : llega <= hastaTiempo) {
+                cola.push(pendientes[indexLlegadas]);
+                indexLlegadas++;
+            } else break;
         }
     };
 
-    encolarLlegadas(tiempoActual);
+    encolarLlegadas(tiempoActual, false);
 
-    while (cola.length > 0 || indexLlegadas < pendientes.length) {
+    // El ciclo continúa si hay procesos en cola, por llegar, o uno esperando a ser guardado
+    while (cola.length > 0 || indexLlegadas < pendientes.length || procesoEnGuardado !== null) {
         
+        // Si la cola está vacía pero el proceso actual se desalojó a sí mismo sin nadie más esperando
+        if (cola.length === 0 && procesoEnGuardado !== null) {
+            cola.push(procesoEnGuardado);
+            procesoEnGuardado = null;
+        }
+
         if (cola.length === 0) {
             let proximo = pendientes[indexLlegadas];
-            gantt.push({ tipo: 'idle', duracion: proximo.tlleg - tiempoActual, inicio: tiempoActual, fin: proximo.tlleg, razon: "CPU inactiva" });
+            gantt.push({ tipo: 'idle', duracion: proximo.tlleg - tiempoActual, inicio: tiempoActual, fin: proximo.tlleg, razon: "CPU Inactiva" });
             tiempoActual = proximo.tlleg;
-            encolarLlegadas(tiempoActual);
-            ultimoProcesoId = null; // Al estar inactiva, el siguiente proceso entra sin pagar cambio de contexto
+            encolarLlegadas(tiempoActual, false);
+            ultimoProcesoId = null;
         }
 
         let p = cola.shift(); 
 
+        // GESTIÓN ESTRICTA DE CAMBIO DE CONTEXTO (CS)
         if (ultimoProcesoId !== null && ultimoProcesoId !== p.id && ctxt > 0) {
             let inicioCs = tiempoActual;
             tiempoActual += ctxt;
-            gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoActual, razon: `Cambio de contexto` });
+            gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoActual, razon: `Cambio de Contexto` });
             
-            encolarLlegadas(tiempoActual); 
+            // REGLA 1 Y 3: Los que llegaron DURANTE el CS (ej: C en el seg 7) entran primero
+            encolarLlegadas(tiempoActual, true); 
+            
+            // EL proceso anterior termina de guardar su contexto y entra a la cola (ej: A entra aquí)
+            if (procesoEnGuardado !== null) {
+                cola.push(procesoEnGuardado);
+                procesoEnGuardado = null;
+            }
+            
+            // Los que llegaron EXACTAMENTE al final del CS (ej: D en el seg 8) entran después
+            encolarLlegadas(tiempoActual, false);
+        } else {
+            // Si no hubo CS pero había un proceso esperando guardado (ej: ctxt = 0)
+            if (procesoEnGuardado !== null) {
+                cola.push(procesoEnGuardado);
+                procesoEnGuardado = null;
+            }
         }
 
         let tiempoEjecucion = Math.min(p.tejeRestante, quantum);
@@ -184,10 +212,12 @@ export function simularRR(procesos, ctxt, quantum) {
              inicio: inicioProc, fin: tiempoActual, razon: `Ejecuta ${p.id}`, esFinal: termino
         });
 
-        encolarLlegadas(tiempoActual);
+        // Encolamos a los que llegan justo cuando termina el quantum (ej: B en el seg 6)
+        encolarLlegadas(tiempoActual, false);
 
         if (!termino) {
-            cola.push(p);
+            // REGLA 2: No se encola inmediatamente, se guarda en el "buffer" para el CS
+            procesoEnGuardado = p;
         } else {
             let tret = tiempoActual - p.tlleg;
             let tesp = tret - p.teje;
