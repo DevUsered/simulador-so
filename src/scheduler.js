@@ -48,15 +48,9 @@ export function simularSJF(procesos, ctxt) {
     let gantt = [];
     let stats = [];
     let tiempoActual = 0;
-    
-    if (ctxt > 0) {
-        gantt.push({ tipo: 'cs', duracion: ctxt, inicio: 0, fin: ctxt, razon: 'Arranque del SO' });
-        tiempoActual = ctxt;
-    }
 
     let pendientes = [...procesos];
     let ultimoProcesoId = null;
-    let esPrimerProceso = true;
 
     while (pendientes.length > 0) {
         let disponibles = pendientes.filter(p => p.tlleg <= tiempoActual);
@@ -70,12 +64,10 @@ export function simularSJF(procesos, ctxt) {
 
             let p = disponibles[0];
 
-            if (esPrimerProceso) { ultimoProcesoId = p.id; esPrimerProceso = false; }
-
             if (ultimoProcesoId !== null && ultimoProcesoId !== p.id && ctxt > 0) {
                 let inicioCs = tiempoActual;
                 tiempoActual += ctxt;
-                gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoActual, razon: `Cambio de contexto.` });
+                gantt.push({ tipo: 'cs', duracion: ctxt, inicio: inicioCs, fin: tiempoActual, razon: 'Cambio de contexto' });
             }
 
             let inicioProc = tiempoActual;
@@ -83,7 +75,6 @@ export function simularSJF(procesos, ctxt) {
 
             gantt.push({ tipo: 'proceso', id: p.id, color: p.color, duracion: p.teje, inicio: inicioProc, fin: tiempoActual, razon: `Se ejecuta ${p.id}`, esFinal: true });
 
-            // ✨ FÓRMULA UNIVERSAL
             let tret = tiempoActual - p.tlleg; 
             let tesp = tret - p.teje;          
             stats.push({ id: p.id, tf: tiempoActual, tret, tesp });
@@ -92,7 +83,7 @@ export function simularSJF(procesos, ctxt) {
             ultimoProcesoId = p.id;
         } else {
             let proximo = [...pendientes].sort((a, b) => a.tlleg - b.tlleg)[0];
-            gantt.push({ tipo: 'idle', duracion: proximo.tlleg - tiempoActual, inicio: tiempoActual, fin: proximo.tlleg, razon: "CPU inactiva." });
+            gantt.push({ tipo: 'idle', duracion: proximo.tlleg - tiempoActual, inicio: tiempoActual, fin: proximo.tlleg, razon: 'CPU inactiva' });
             tiempoActual = proximo.tlleg;
             ultimoProcesoId = null;
         }
